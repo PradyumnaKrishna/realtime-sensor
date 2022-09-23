@@ -2,9 +2,12 @@
 Main APIs for the app
 """
 
+from typing import List
+
 from fastapi import FastAPI, Depends, Request
 
 from app.models.database import get_db, init_db, Database
+from app.models.models import Values
 
 app = FastAPI()
 
@@ -39,7 +42,7 @@ async def save(key: str, value: float, db = Depends(get_db)):
     return {"message": "Data saved"}
 
 
-@app.get("/get/")
+@app.get("/get/", response_model=List[Values])
 async def get(request: Request, db = Depends(get_db)):
     """Returns all values for a given key or date.
 
