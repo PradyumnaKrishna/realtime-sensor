@@ -2,7 +2,7 @@
 Main APIs for the app
 """
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 
 from app.models.database import get_db, init_db, Database
 
@@ -40,24 +40,22 @@ async def save(key: str, value: float, db = Depends(get_db)):
 
 
 @app.get("/get/")
-async def get(key: str = "", date: str = "", db = Depends(get_db)):
+async def get(request: Request, db = Depends(get_db)):
     """Returns all values for a given key or date.
 
     Args:
-        key (str, optional): Key to get. Defaults to "".
-        date (str, optional): Date to get. Defaults to "".
+        request (Request): Request object
         db (Database): Database connection (FastAPI dependency)
+
+    Parameters:
+        key (str): Key to get
+        date (str): Date to get
 
     Returns:
         List of values for the given key
     """
+
+    query = dict(request.query_params)
+
     db = Database(db)
-
-    if key and date:
-        return await db.get(key=key, time=date)
-    if key:
-        return await db.get(key=key)
-    if date:
-        return await db.get(time=date)
-
-    return await db.get()
+    return await db.get(**query)

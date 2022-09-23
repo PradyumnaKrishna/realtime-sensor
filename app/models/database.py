@@ -2,6 +2,8 @@
 Module to provide API related to the database.
 """
 
+import itertools
+
 from aiosqlite import connect
 
 DATABASE_URL = "data.sqlite3"
@@ -43,12 +45,30 @@ class Database:
         values = tuple(kwargs.values())
 
         # case for datetime having date.
-        if "time" in kwargs:
-            where = where.replace("time", "date(time)")
+        if "date" in kwargs:
+            where = where.replace("date", "date(time)")
 
         # Database query.
-        query = f"SELECT * FROM {TABLE} WHERE {where} ORDER BY time, key"
+        query = f"SELECT * FROM {TABLE} ORDER BY key, time"
+        if where:
+            query = f"SELECT * FROM {TABLE} WHERE {where} ORDER BY key, time"
+
         async with self.db.execute(query, values) as cursor:
             data = await cursor.fetchall()
 
-        return data
+        # extract values and time based on key in data.
+        values = []
+        for key, group in itertools.groupby(data, lambda x: x[2]):
+            temp_dict = {
+                "key": key,
+                "values": [],
+                "times": [],
+            }
+
+            for row in group:
+                temp_dict["values"].append(row[3])
+                temp_dict["times"].append(row[1])
+
+            values.append(temp_dict)
+
+        return values
