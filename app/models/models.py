@@ -12,4 +12,4 @@ class Values(BaseModel):
     """Values model."""
     key: str
     values: List[float]
-    times: List[datetime]
+    timestamps: List[datetime]

@@ -5,11 +5,15 @@ Main APIs for the app
 from typing import List
 
 from fastapi import FastAPI, Depends, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from app.models.database import get_db, init_db, Database
 from app.models.models import Values
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @app.on_event("startup")
@@ -21,8 +25,8 @@ async def shutdown():
     pass
 
 @app.get("/")
-async def root():
-    return {"message": "Hello World"}
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/save/{key}/{value}")
@@ -62,3 +66,19 @@ async def get(request: Request, db = Depends(get_db)):
 
     db = Database(db)
     return await db.get(**query)
+
+
+@app.get("/get/{date}", response_model=List[int])
+async def get_date(date: str, db = Depends(get_db)):
+    """Returns unique keys for given date.
+
+    Args:
+        date (str): Date to get
+        db (Database): Database connection (FastAPI dependency)
+
+    Returns:
+        List of unique keys for the given date
+    """
+
+    db = Database(db)
+    return await db.get_keys(date)

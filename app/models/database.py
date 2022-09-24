@@ -62,13 +62,22 @@ class Database:
             temp_dict = {
                 "key": key,
                 "values": [],
-                "times": [],
+                "timestamps": [],
             }
 
             for row in group:
                 temp_dict["values"].append(row[3])
-                temp_dict["times"].append(row[1])
+                temp_dict["timestamps"].append(row[1])
 
             values.append(temp_dict)
 
         return values
+
+    async def get_keys(self, date):
+        """Get unique keys for a given date."""
+
+        async with self.db.execute(f"SELECT DISTINCT key FROM {TABLE} "
+            "WHERE date(time) = ?", (date,)) as cursor:
+            data = await cursor.fetchall()
+
+        return [row[0] for row in data]
