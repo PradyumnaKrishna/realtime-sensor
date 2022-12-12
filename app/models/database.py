@@ -6,6 +6,7 @@ import itertools
 
 from aiosqlite import connect
 
+
 DATABASE_URL = "data.sqlite3"
 TABLE = "SensorData"
 
@@ -13,7 +14,7 @@ TABLE = "SensorData"
 async def get_db():
     """Get database connection."""
     async with connect(DATABASE_URL) as db:
-        yield db
+        yield Database(db)
 
 
 async def init_db():

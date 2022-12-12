@@ -29,8 +29,13 @@ async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/check")
+async def check():
+    return {"message": "OK"}
+
+
 @app.get("/save/{key}/{value}")
-async def save(key: str, value: float, db = Depends(get_db)):
+async def save(key: str, value: float, db: Database = Depends(get_db)):
     """Save a key-value pair to the database.
 
     Args:
@@ -41,13 +46,13 @@ async def save(key: str, value: float, db = Depends(get_db)):
     Returns:
         Response indicating success or failure
     """
-    db = Database(db)
+
     await db.save(key, value)
     return {"message": "Data saved"}
 
 
 @app.get("/get/", response_model=List[Values])
-async def get(request: Request, db = Depends(get_db)):
+async def get(request: Request, db: Database = Depends(get_db)):
     """Returns all values for a given key or date.
 
     Args:
@@ -64,12 +69,11 @@ async def get(request: Request, db = Depends(get_db)):
 
     query = dict(request.query_params)
 
-    db = Database(db)
     return await db.get(**query)
 
 
-@app.get("/get/{date}", response_model=List[int])
-async def get_date(date: str, db = Depends(get_db)):
+@app.get("/get/{date}", response_model=List[str])
+async def get_keys(date: str, db: Database = Depends(get_db)):
     """Returns unique keys for given date.
 
     Args:
@@ -80,5 +84,4 @@ async def get_date(date: str, db = Depends(get_db)):
         List of unique keys for the given date
     """
 
-    db = Database(db)
     return await db.get_keys(date)
