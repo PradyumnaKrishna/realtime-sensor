@@ -1,9 +1,173 @@
-<!-- Hello World -->
-<!Doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
     <title>Realtime Sensor</title>
+    <style>
+      th, td {
+        padding: 15px;
+      }
+    </style>
+    <link rel="stylesheet" href={{ url_for('static', path='bootstrap.min.css') }}></link>
+    <script src={{ url_for('static', path='chart.min.js') }}></script>
   </head>
   <body>
-    <h1>Realtime Sensor</h1>
+    <!-- bar chart canvas element -->
+    <div class="container">
+      <div>
+          <h1>Realtime Sensor</h1>
+          <p>Select Date and Key</p>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <div class="container" style="width: 100%;">
+          <div class="flex row">
+            <div class="col=md-6 w-50">
+              {% if not live %}
+              <div class="d-flex justify-content-center">
+                <div class="alert alert-warning w-75" role="alert" style="border-radius: .5rem;">
+                  No sensor configured, live is disabled.
+                </div>
+              </div>
+              {% endif %}
+              <form id="myform" style="text-align: start;">
+                <table class="w-75">
+                  <tr>
+                    <td><label for="date">Choose a Date: </label></td>
+                    <td class="text-right">
+                      <input id="date" type="date" onchange="getKeys(event);" required></input></td>
+                  </tr>
+                  <tr>
+                    <td><label for="key">Choose a Key:</label></td>
+                    <td class="text-right">
+                      <select id="key" name="key" required class="w-75 custom-select"></select></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td class="text-right">
+                      <input type="submit" class="btn btn-primary"></td>
+                  </tr>
+                </table>
+              </form>
+            </div>
+            <div class="col=md-6 w-50">
+              <canvas id="myChart" width="600" height="400" style="display: inline;"></canvas>
+            </div>
+          </div>  
+        </div>
+      </div>
+
+
+    <script>
+      key = document.getElementById("key");
+      
+      const dateTimeOptions = {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZoneName: 'short',
+      };
+
+      // Create Time Series Chart
+      var ctx = document.getElementById("myChart").getContext("2d");
+      var myChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "Sensor Data",
+              hoverLabels: [],
+              data: [],
+              backgroundColor: "rgba(255, 99, 132, 0.2)",
+              borderColor: "rgba(255, 99, 132, 1)",
+              borderWidth: 1,
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          title: {
+            display: true,
+            text: "Sensor Data",
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: function (context) {
+                  return context[0].dataset.hoverLabels[context[0].dataIndex];
+                },
+              },
+            }
+          },
+          scales: {
+            x: {
+              type: "linear",
+              title: {
+                display: true,
+                text: "Time (s)",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Value",
+              },
+            },
+          },
+        },
+      });
+
+      function getKeys(e) {
+        fetch(`/get/${e.target.value}/`)
+          .then(response => response.json())
+          .then(data => {
+            key.innerHTML = "";
+            data.forEach((item) => {
+              var opt = document.createElement('option');
+              opt.value = item;
+              opt.innerHTML = item;
+              key.appendChild(opt);
+            });
+          });
+      }
+
+      // on submit 
+      document.getElementById("myform").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var date = document.getElementById("date").value;
+        var key = document.getElementById("key").value;
+        fetch(`/get?date=${date}&key=${key}`)
+          .then(response => response.json())
+          .then(data => {
+            var timestamps = data[0]["timestamps"];
+
+            // Hover Labels
+            var hoverLabels = timestamps.map((item) => {
+              return new Date(item).toLocaleString('en-US', dateTimeOptions);
+            });
+
+            // Generate time delta labels from Dates
+            var labels = timestamps.map((item, index) => {
+              if (index == 0) {
+                return 0;
+              }
+              return (new Date(item) - new Date(timestamps[0])) / 1000;
+            });
+
+            myChart.data.labels = labels;
+            myChart.data.datasets[0].hoverLabels = hoverLabels;
+            myChart.data.datasets[0].data = data[0]["values"];
+            myChart.update();
+          });
+      });
+
+    </script>
+
+  </body>
 </html>
