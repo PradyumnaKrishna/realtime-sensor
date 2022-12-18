@@ -53,7 +53,7 @@ class Database:
             where = where.replace("date", "date(time)")
 
         # Build Database query.
-        query = f"SELECT * FROM {TABLE} "
+        query = f"SELECT *, datetime(time, 'localtime') FROM {TABLE} "
         query += f"WHERE {where} " if where else ""
         query += "ORDER BY key, time"
 
