@@ -1,5 +1,5 @@
 [MASTER]
-disable=C0116
+disable=C0116, C0103
 
 [MESSAGES CONTROL]
 extension-pkg-whitelist=pydantic
