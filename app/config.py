@@ -14,6 +14,10 @@ from app.comms.sensors import SensorProtocol, RandomSensor
 class Settings(BaseSettings):
     """Settings model."""
 
+    # Only SQLIte Database is supported
+    database_url: str = "data.sqlite3"
+    database_table: str = "SensorData"
+
     # Sensor
     sensor: Optional[SensorProtocol] = RandomSensor()
 

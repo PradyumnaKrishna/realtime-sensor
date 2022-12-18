@@ -6,9 +6,12 @@ import itertools
 
 from aiosqlite import connect
 
+from app.config import get_settings
 
-DATABASE_URL = "data.sqlite3"
-TABLE = "SensorData"
+
+settings = get_settings()
+DATABASE_URL = settings.database_url
+TABLE = settings.database_table
 
 
 async def get_db():
@@ -49,10 +52,10 @@ class Database:
         if "date" in kwargs:
             where = where.replace("date", "date(time)")
 
-        # Database query.
-        query = f"SELECT * FROM {TABLE} ORDER BY key, time"
-        if where:
-            query = f"SELECT * FROM {TABLE} WHERE {where} ORDER BY key, time"
+        # Build Database query.
+        query = f"SELECT * FROM {TABLE} "
+        query += f"WHERE {where} " if where else ""
+        query += "ORDER BY key, time"
 
         async with self.db.execute(query, values) as cursor:
             data = await cursor.fetchall()
