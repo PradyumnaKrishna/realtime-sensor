@@ -44,7 +44,7 @@
                       <select id="key" name="key" required class="w-75 custom-select"></select></td>
                   </tr>
                   <tr>
-                    <td></td>
+                    <td><button id="liveBtn" type="button" class="btn btn-danger w-50" onclick="liveGraph()" {% if not live %}disabled{% endif %}>Live</button></td>
                     <td class="text-right">
                       <input type="submit" class="btn btn-primary"></td>
                   </tr>
@@ -166,6 +166,64 @@
             myChart.update();
           });
       });
+
+      // live graph
+      var ws;
+      function liveGraph() {
+        var liveBtn = document.getElementById("liveBtn");
+        if (liveBtn.innerHTML == "Live") {
+          liveBtn.innerHTML = "Stop";
+          liveBtn.classList.remove("btn-danger");
+          liveBtn.classList.add("btn-secondary");
+
+          // clear chart data
+          myChart.data.labels = [];
+          myChart.data.datasets[0].hoverLabels = [];
+          myChart.data.datasets[0].data = [];
+          myChart.update();
+
+          // websocket /live
+          ws = new WebSocket("ws://" + window.location.host + "/live");
+          ws.onmessage = function (event) {
+            var json = JSON.parse(event.data);
+
+            if (json.type === "data") {
+              data = json.data
+              if (myChart.data.labels.length == 0) {
+                myChart.data.labels.push(0);
+                myChart.data.datasets[0].hoverLabels.push(
+                  new Date(data["timestamp"]).toLocaleString('en-US', dateTimeOptions)
+                );
+                myChart.data.datasets[0].data.push(data["value"]);
+                myChart.update();
+              } else {
+                var date = new Date(data["timestamp"]);
+                var label = (date - new Date(myChart.data.datasets[0].hoverLabels[0])) / 1000;
+                myChart.data.labels.push(label);
+                myChart.data.datasets[0].hoverLabels.push(
+                  date.toLocaleString('en-US', dateTimeOptions)
+                );
+                myChart.data.datasets[0].data.push(data["value"]);
+                myChart.update();
+              }
+            } else if (json.type === "log") {
+              if (json.data.level === 40 || json.data.level === 50) {
+                alert(json.data.message);
+                console.error(json.data.message);
+              } else if (json.data.level === 30) {
+                console.warn(json.data.message);
+              } else if (json.data.level === 20) {
+                console.info(json.data.message);
+              }
+            }
+          };
+        } else {
+          liveBtn.innerHTML = "Live";
+          liveBtn.classList.remove("btn-success");
+          liveBtn.classList.add("btn-danger");
+          ws.close(1000);
+        }
+      }
 
     </script>
 

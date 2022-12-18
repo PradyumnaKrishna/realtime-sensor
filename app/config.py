@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # Sensor
     sensor: Optional[SensorProtocol] = RandomSensor()
+    sensor_delay: int = 2  # seconds
 
     # Logger (default is uvicorn)
     logger: str = "uvicorn"

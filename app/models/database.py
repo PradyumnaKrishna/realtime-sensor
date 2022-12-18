@@ -85,3 +85,17 @@ class Database:
             data = await cursor.fetchall()
 
         return [row[0] for row in data]
+
+    async def generate_key(self):
+        """Generate a unique key for a sensor."""
+
+        async with self.db.execute(f"SELECT DISTINCT key FROM {TABLE} "
+            "WHERE date(time) = date('now')") as cursor:
+            data = await cursor.fetchall()
+
+        keys = [row[0] for row in data]
+
+        if not keys:
+            return "A"
+
+        return chr(ord(max(keys)) + 1)
